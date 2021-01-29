@@ -60,6 +60,7 @@ public class DriveMotionPlanner implements CSVWritable {
 
     double mDt = 0.0;
 
+    // TODO tune or verify
     public double getMaxRotationSpeed(){
         final double kStartPoint = 0.2;
         final double kPivotPoint = 0.5;
@@ -210,7 +211,7 @@ public class DriveMotionPlanner implements CSVWritable {
             normalizedSpeed = defaultVelocity;
         }
 
-        final Translation2d steeringVector = Translation2d.fromPolar(steeringDirection, normalizedSpeed);
+        final Translation2d steeringVector = Translation2d.fromPolar(normalizedSpeed, steeringDirection);
         return steeringVector;
     }
 
@@ -226,20 +227,25 @@ public class DriveMotionPlanner implements CSVWritable {
         mDt = timestamp - mLastTime;
         mLastTime = timestamp;
 
-        current_state = current_state.transformBy(Pose2d.fromTranslation(followingCenter));
+//        current_state = current_state.transformBy(Pose2d.fromTranslation(followingCenter));
 
+        // find closest point to robot on path
+        // TODO better implementation?
         double searchStepSize = 1.0;
         double previewQuantity = 0.0;
         double searchDirection = 1.0;
         double forwardDistance = distance(current_state, previewQuantity + searchStepSize);
         double reverseDistance = distance(current_state, previewQuantity - searchStepSize);
         searchDirection = Math.signum(reverseDistance - forwardDistance);
-        while(searchStepSize > 0.001){
-            if(Util.epsilonEquals(distance(current_state, previewQuantity), 0.0, 0.001)) break;
-            while(/* next point is closer than current point */ distance(current_state, previewQuantity + searchStepSize*searchDirection) <
+        while (searchStepSize > 0.001){
+            if (Util.epsilonEquals(distance(current_state, previewQuantity), 0.0, 0.001)) {
+                break;
+            }
+
+            while (/* next point is closer than current point */ distance(current_state, previewQuantity + searchStepSize*searchDirection) <
                     distance(current_state, previewQuantity)) {
                 /* move to next point */
-                previewQuantity += searchStepSize*searchDirection;
+                previewQuantity += searchStepSize * searchDirection;
             }
             searchStepSize /= 10.0;
             searchDirection *= -1;

@@ -85,9 +85,9 @@ public class Drive extends Subsystem {
             mDriveControlState = ControlState.OPEN_LOOP;
         }
 
-        adjustDriveSignal(signal);
-        mPeriodicIO.wheel_speeds = signal.getWheelSpeeds();
-        mPeriodicIO.wheel_azimuths = signal.getWheelAzimuths();
+        DriveSignal adjusted = Util.adjustDriveSignal(signal, getModuleAzimuths());
+        mPeriodicIO.wheel_speeds = adjusted.getWheelSpeeds();
+        mPeriodicIO.wheel_azimuths = adjusted.getWheelAzimuths();
     }
 
     public void setTeleopInputs(double forward, double strafe, double rotation, boolean low_power, boolean field_relative, boolean use_heading_controller) {
@@ -231,12 +231,7 @@ public class Drive extends Subsystem {
 
             mPeriodicIO.error = mMotionPlanner.getError();
             mPeriodicIO.path_setpoint = mMotionPlanner.getSetpoint();
-            double rotationInput = Deadband.applyLowHigh(
-                    rotationCorrection * driveVector.norm(),
-                    mMotionPlanner.getMaxRotationSpeed(),
-                    0.01,
-                    0.0
-            );
+            double rotationInput = Deadband.apply(rotationCorrection * driveVector.norm(), mMotionPlanner.getMaxRotationSpeed());
 
             if (!mOverrideTrajectory) {
                 if (Util.epsilonEquals(driveVector.norm(), 0.0, Util.kEpsilon)) {
@@ -247,8 +242,7 @@ public class Drive extends Subsystem {
                 }
             } else {
                 DriveSignal signal = DriveSignal.BRAKE;
-                adjustDriveSignal(signal);
-                setDriveOutputs(signal);
+                setDriveOutputs(Util.adjustDriveSignal(signal, getModuleAzimuths()));
             }
 
             lastDriveVector = driveVector;
@@ -275,12 +269,6 @@ public class Drive extends Subsystem {
         return ret_val;
     }
 
-//    public synchronized void setDriveOutputs(List<Translation2d> driveVectors, double velocityOverride) {
-//        for (int i = 0; i < 4; i++) {
-//            if ()
-//        }
-//    }
-
     /**
      * Configures each module to match its assigned vector, but puts the drive motors into closed-loop velocity mode
      */
@@ -291,9 +279,9 @@ public class Drive extends Subsystem {
             velocities[i] = signal.getWheelSpeeds()[i];
             azimuths[i] = signal.getWheelAzimuths()[i];
         }
-        adjustDriveSignal(new DriveSignal(velocities, azimuths));
-        mPeriodicIO.wheel_speeds = velocities;
-        mPeriodicIO.wheel_azimuths = azimuths;
+        DriveSignal adjusted = Util.adjustDriveSignal(new DriveSignal(velocities, azimuths), getModuleAzimuths());
+        mPeriodicIO.wheel_speeds = adjusted.getWheelSpeeds();
+        mPeriodicIO.wheel_azimuths = adjusted.getWheelAzimuths();
     }
 
     public void setDriveOutputs(DriveSignal signal, double velocityOverride) {
@@ -303,9 +291,9 @@ public class Drive extends Subsystem {
             velocities[i] = velocityOverride;
             azimuths[i] = signal.getWheelAzimuths()[i];
         }
-        adjustDriveSignal(new DriveSignal(velocities, azimuths));
-        mPeriodicIO.wheel_speeds = velocities;
-        mPeriodicIO.wheel_azimuths = azimuths;
+        DriveSignal adjusted = Util.adjustDriveSignal(new DriveSignal(velocities, azimuths), getModuleAzimuths());
+        mPeriodicIO.wheel_speeds = adjusted.getWheelSpeeds();
+        mPeriodicIO.wheel_azimuths = adjusted.getWheelAzimuths();
     }
 
     public boolean isDoneWithTrajectory() {
@@ -325,24 +313,6 @@ public class Drive extends Subsystem {
         if (mCSVWriter != null) {
             mCSVWriter.flush();
             mCSVWriter = null;
-        }
-    }
-
-    /**
-     * Optimizes azimuth setpoints and drive velocity setpoints so no needed azimuth rotation is > pi/2 radians
-     * and adjusts drive velocity direction accordingly
-     *
-     * @param signal Raw DriveSignal
-     */
-    public void adjustDriveSignal(DriveSignal signal) {
-        Rotation2d[] aziSetpoints = signal.getWheelAzimuths();
-        Rotation2d[] currentAzis = getModuleAzimuths();
-        double[] wheelVelocities = signal.getWheelSpeeds();
-        for (int i = 0; i < mModules.length; i++) {
-            double raw_error = aziSetpoints[i].getRadians() - currentAzis[i].getRadians();
-            if (Math.abs(raw_error) > Math.PI / 2) {
-                wheelVelocities[i] *= -1;
-            }
         }
     }
 }

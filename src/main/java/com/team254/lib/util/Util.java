@@ -1,5 +1,7 @@
 package com.team254.lib.util;
 
+import com.team254.lib.geometry.Rotation2d;
+
 import java.util.List;
 
 /**
@@ -82,5 +84,40 @@ public class Util {
         }
 
         return degrees;
+    }
+
+    /**
+     * Optimizes azimuth setpoints and drive velocity setpoints so no needed azimuth rotation is > pi/2 radians
+     * and adjusts drive velocity direction accordingly
+     *
+     * @param signal Raw DriveSignal
+     */
+    public static DriveSignal adjustDriveSignal(DriveSignal signal, Rotation2d[] currentAzis) {
+        Rotation2d[] aziSetpoints = signal.getWheelAzimuths();
+        double[] velSetpoints = signal.getWheelSpeeds();
+
+        for (int i = 0; i < 4; i++) {
+            double boundedAziSetpoint = Util.bound0To2PIRadians(aziSetpoints[i].getRadians());
+            double boundedAziCurrent = Util.bound0To2PIRadians(currentAzis[i].getRadians());
+            double error = Util.bound0To2PIRadians(boundedAziSetpoint - boundedAziCurrent);
+            if (error > Math.PI) {
+                error -= Math.PI;
+            } else if (error < -Math.PI) {
+                error += Math.PI;
+            }
+
+            if (Math.abs(error) > Math.PI / 2) {
+                velSetpoints[i] *= -1;
+
+                aziSetpoints[i] = Rotation2d.fromRadians(oppositeAngle(aziSetpoints[i]));
+            }
+        }
+        return new DriveSignal(velSetpoints, aziSetpoints);
+    }
+
+    private static double oppositeAngle(Rotation2d angle) {
+        double angleM = Util.bound0To2PIRadians(angle.getRadians());
+        angleM += Math.PI;
+        return angleM % (2 * Math.PI);
     }
 }

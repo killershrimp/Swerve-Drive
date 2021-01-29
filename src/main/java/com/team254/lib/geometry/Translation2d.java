@@ -37,7 +37,7 @@ public class Translation2d implements ITranslation2d<Translation2d> {
         y_ = end.y_ - start.y_;
     }
 
-    public static Translation2d fromPolar(Rotation2d direction, double magnitude) {
+    public static Translation2d fromPolar(double magnitude, Rotation2d direction) {
         return new Translation2d(direction.cos() * magnitude, direction.sin() * magnitude);
     }
 
