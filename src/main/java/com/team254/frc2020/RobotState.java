@@ -49,8 +49,6 @@ public class RobotState {
     private MovingAverageTwist2d vehicle_velocity_measured_filtered_;
     private double distance_driven_;
 
-    private Rotation2d kTurretAngle = Rotation2d.fromDegrees(0);
-
     private RobotState() {
         reset(0.0, Pose2d.identity());
     }

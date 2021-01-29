@@ -3,6 +3,7 @@ package com.team254.frc2020.auto.actions;
 import com.team254.frc2020.RobotState;
 import com.team254.frc2020.subsystems.Drive;
 import com.team254.lib.geometry.Pose2dWithCurvature;
+import com.team254.lib.geometry.Rotation2d;
 import com.team254.lib.trajectory.TimedView;
 import com.team254.lib.trajectory.Trajectory;
 import com.team254.lib.trajectory.TrajectoryIterator;
@@ -14,15 +15,17 @@ public class DriveTrajectoryAction implements Action {
     private static final RobotState mRobotState = RobotState.getInstance();
 
     private final TrajectoryIterator<TimedState<Pose2dWithCurvature>> mTrajectory;
+    private final Rotation2d mAbsGoalHeading;
     private final boolean mResetPose;
 
-    public DriveTrajectoryAction(Trajectory<TimedState<Pose2dWithCurvature>> trajectory) {
-        this(trajectory, false);
+    public DriveTrajectoryAction(Trajectory<TimedState<Pose2dWithCurvature>> trajectory, Rotation2d absGoalHeading) {
+        this(trajectory, absGoalHeading, false);
     }
 
 
-    public DriveTrajectoryAction(Trajectory<TimedState<Pose2dWithCurvature>> trajectory, boolean resetPose) {
+    public DriveTrajectoryAction(Trajectory<TimedState<Pose2dWithCurvature>> trajectory, Rotation2d absGoalHeading, boolean resetPose) {
         mTrajectory = new TrajectoryIterator<>(new TimedView<>(trajectory));
+        mAbsGoalHeading = absGoalHeading;
         mResetPose = resetPose;
     }
 
@@ -32,7 +35,7 @@ public class DriveTrajectoryAction implements Action {
         if (mResetPose) {
             mRobotState.reset(Timer.getFPGATimestamp(), mTrajectory.getState().state().getPose());
         }
-        mDrive.setTrajectory(mTrajectory);
+        mDrive.setTrajectory(mTrajectory, mAbsGoalHeading);
     }
 
     @Override

@@ -2,6 +2,8 @@
 
 Code for an FRC Swerve Drive based on Team 254's 2019 offseason swerve code.
 
+Note: all code is untested on actual robots!
+
 ## Features
 - Autonomous stack with pure pursuit
 
@@ -19,7 +21,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Installing
 
-Download this project (you've already done that!)
+Download this project
 
 Install all necessary tools: Gradle, Third-Party libraries, etc.
 

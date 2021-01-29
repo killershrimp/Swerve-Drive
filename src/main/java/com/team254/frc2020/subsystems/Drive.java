@@ -104,7 +104,7 @@ public class Drive extends Subsystem {
 
     @Override
     public void readPeriodicInputs() {
-        mPeriodicIO.gyro_heading = Rotation2d.fromDegrees(mPigeonIMU.getFusedHeading()).rotateBy(mGyroOffset);
+        mPeriodicIO.gyro_heading = Rotation2d.fromRadians(mPigeonIMU.getFusedHeading()).rotateBy(mGyroOffset);
 
         mPeriodicIO.timestamp = Timer.getFPGATimestamp();
 
@@ -202,8 +202,11 @@ public class Drive extends Subsystem {
         return mPeriodicIO.gyro_heading;
     }
 
+    /**
+     * @param heading local heading
+     */
     public synchronized void setHeading(Rotation2d heading) {
-        mGyroOffset = heading.rotateBy(Rotation2d.fromDegrees(mPigeonIMU.getFusedHeading()).inverse());
+        mGyroOffset = heading.rotateBy(Rotation2d.fromRadians(mPigeonIMU.getFusedHeading()).inverse());
 
         mPeriodicIO.gyro_heading = heading;
     }
@@ -211,16 +214,17 @@ public class Drive extends Subsystem {
     /**
      * @param trajectory Desired robot trajectory
      */
-    public synchronized void setTrajectory(TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory) {
+    public synchronized void setTrajectory(TrajectoryIterator<TimedState<Pose2dWithCurvature>> trajectory, Rotation2d absoluteHeading) {
         if (mMotionPlanner != null) {
             mOverrideTrajectory = false;
             mMotionPlanner.reset();
             mMotionPlanner.setTrajectory(trajectory);
             mDriveControlState = ControlState.PATH_FOLLOWING;
+            SwerveHeadingController.getInstance().setHeadingControllerState(SwerveHeadingController.HeadingControllerState.SNAP);
+            SwerveHeadingController.getInstance().setGoal(absoluteHeading.getDegrees());
         }
     }
 
-    // TODO
     Translation2d lastDriveVector = Translation2d.identity();
     private void updatePathFollower() {
         if (mDriveControlState == ControlState.PATH_FOLLOWING) {
@@ -231,6 +235,8 @@ public class Drive extends Subsystem {
 
             mPeriodicIO.error = mMotionPlanner.getError();
             mPeriodicIO.path_setpoint = mMotionPlanner.getSetpoint();
+
+            // TODO check this
             double rotationInput = Deadband.apply(rotationCorrection * driveVector.norm(), mMotionPlanner.getMaxRotationSpeed());
 
             if (!mOverrideTrajectory) {

@@ -31,28 +31,8 @@ public class Robot extends TimedRobot {
 
     private IControlBoard mControlBoard = ControlBoard.getInstance();
 
-    private TimeDelayedBoolean mHangModeEnablePressed = new TimeDelayedBoolean();
-    private TimeDelayedBoolean mHangModeLowEnablePressed = new TimeDelayedBoolean();
-    private boolean mInHangMode;
-    private boolean mIntakeButtonPressed = false;
-    private boolean mHangModeReleased = true;
-
-    private MultiTrigger mDiskIntakeTrigger = new MultiTrigger(.4);
-    private MultiTrigger mBallIntakeTrigger = new MultiTrigger(.4);
-
     private boolean mHasBeenEnabled = false;
     private DigitalInput mResetButton = new DigitalInput(Constants.kResetButtonChannel);
-
-    private double mLastShootPressedTime = -1.0;
-    private double mOffsetOverride = -1.0;
-
-    private LatchedBoolean mShootPressed = new LatchedBoolean();
-    private boolean mStickyShoot;
-
-    private LatchedBoolean mThrustReleased = new LatchedBoolean();
-    private LatchedBoolean mThrustPressed = new LatchedBoolean();
-    private double mLastThrustPressedTime = -1.0;
-    private double mLastThrustShotTime = Double.NaN;
 
     private AutoModeSelector mAutoModeSelector = new AutoModeSelector();
     private AutoModeExecutor mAutoModeExecutor;

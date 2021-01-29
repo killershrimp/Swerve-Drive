@@ -21,7 +21,7 @@ public class SwerveHeadingController {
     }
 
     public enum HeadingControllerState {
-        OFF, SNAP, // for dpad snapping to cardinals
+        OFF, SNAP, // for snapping to specific headings
         MAINTAIN, // maintaining current heading while driving
     }
 
